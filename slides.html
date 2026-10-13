@@ -1,0 +1,1527 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Manual de Requerimientos Legales - PedidosYa Slides</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #EA044E;
+            --primary-dark: #D00344;
+            --primary-light: #FFF1F2;
+            --primary-glow: rgba(234, 4, 78, 0.25);
+            --bg-body: #0B0F19;
+            --bg-slide: #FFFFFF;
+            --text-dark: #0F172A;
+            --text-muted: #64748B;
+            --text-light: #F8FAFC;
+            --border-color: #E2E8F0;
+            --card-bg: #F8FAFC;
+            
+            /* Estados oficiales del sistema */
+            --status-new-bg: #E0F2FE; --status-new-txt: #0369A1;
+            --status-process-bg: #FEF3C7; --status-process-txt: #92400E;
+            --status-ready-bg: #FCE7F3; --status-ready-txt: #BE185D;
+            --status-resolved-bg: #DCFCE7; --status-resolved-txt: #166534;
+            --status-rejected-bg: #FEE2E2; --status-rejected-txt: #991B1B;
+            
+            --shadow-sm: 0 2px 4px rgba(0,0,0,0.06);
+            --shadow-md: 0 6px 12px -2px rgba(0,0,0,0.08);
+            --shadow-lg: 0 15px 25px -5px rgba(0,0,0,0.12);
+            --slide-radius: 18px;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background-color: var(--bg-body);
+            color: var(--text-dark);
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            user-select: none;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        /* BARRA SUPERIOR DE CONTROL */
+        .top-bar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 60px;
+            background: rgba(15, 23, 42, 0.85);
+            backdrop-filter: blur(12px);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 2rem;
+            z-index: 1000;
+        }
+
+        .brand-logo {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            color: #FFFFFF;
+            font-weight: 700;
+            font-size: 1.1rem;
+            letter-spacing: -0.5px;
+        }
+
+        .brand-logo .dot {
+            width: 12px;
+            height: 12px;
+            background: var(--primary);
+            border-radius: 50%;
+            display: inline-block;
+            box-shadow: 0 0 10px var(--primary);
+        }
+
+        .brand-logo span {
+            color: var(--primary);
+        }
+
+        .badge-system {
+            font-size: 0.75rem;
+            background: rgba(234, 4, 78, 0.15);
+            color: #FF85A2;
+            padding: 0.25rem 0.6rem;
+            border-radius: 20px;
+            border: 1px solid rgba(234, 4, 78, 0.3);
+            text-transform: uppercase;
+            font-weight: 600;
+            letter-spacing: 0.5px;
+        }
+
+        .top-controls {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .btn-ctrl {
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            color: #FFFFFF;
+            padding: 0.45rem 0.85rem;
+            border-radius: 8px;
+            font-size: 0.85rem;
+            font-weight: 500;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            transition: all 0.2s ease;
+        }
+
+        .btn-ctrl:hover {
+            background: rgba(255, 255, 255, 0.18);
+            border-color: rgba(255, 255, 255, 0.3);
+            transform: translateY(-1px);
+        }
+
+        .btn-primary {
+            background: var(--primary);
+            border-color: var(--primary);
+        }
+
+        .btn-primary:hover {
+            background: var(--primary-dark);
+            border-color: var(--primary-dark);
+        }
+
+        /* BARRA DE PROGRESO */
+        .progress-container {
+            position: fixed;
+            top: 59px;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: rgba(255, 255, 255, 0.05);
+            z-index: 1001;
+        }
+
+        .progress-bar {
+            height: 100%;
+            background: linear-gradient(90deg, var(--primary), #FF6B8B);
+            width: 0%;
+            transition: width 0.3s ease;
+            box-shadow: 0 0 8px var(--primary);
+        }
+
+        /* CONTENEDOR DE LA DIAPOSITIVA */
+        .deck-container {
+            position: relative;
+            width: 92vw;
+            max-width: 1280px;
+            height: 78vh;
+            max-height: 720px;
+            perspective: 1000px;
+            margin-top: 50px;
+        }
+
+        .slide {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: var(--bg-slide);
+            border-radius: var(--slide-radius);
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(255, 255, 255, 0.1);
+            padding: 3rem 3.5rem;
+            display: none;
+            flex-direction: column;
+            justify-content: space-between;
+            overflow: hidden;
+            animation: fadeIn 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+
+        .slide.active {
+            display: flex;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: scale(0.98) translateY(12px);
+            }
+            to {
+                opacity: 1;
+                transform: scale(1) translateY(0);
+            }
+        }
+
+        /* HEADER DE DIAPOSITIVA */
+        .slide-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            border-bottom: 2px solid #F1F5F9;
+            padding-bottom: 1.25rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .slide-tag {
+            font-size: 0.75rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            color: var(--primary);
+            letter-spacing: 1px;
+            margin-bottom: 0.35rem;
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+        }
+
+        .slide-title {
+            font-size: 1.85rem;
+            font-weight: 800;
+            color: var(--text-dark);
+            letter-spacing: -0.5px;
+            line-height: 1.2;
+        }
+
+        .slide-subtitle {
+            font-size: 0.95rem;
+            color: var(--text-muted);
+            margin-top: 0.25rem;
+            font-weight: 400;
+        }
+
+        .slide-number-chip {
+            background: #F1F5F9;
+            color: #475569;
+            font-size: 0.85rem;
+            font-weight: 700;
+            padding: 0.35rem 0.75rem;
+            border-radius: 20px;
+        }
+
+        /* CONTENIDO DE DIAPOSITIVA */
+        .slide-body {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            overflow-y: auto;
+            padding-right: 0.5rem;
+        }
+
+        .slide-body::-webkit-scrollbar {
+            width: 6px;
+        }
+        .slide-body::-webkit-scrollbar-thumb {
+            background: #CBD5E1;
+            border-radius: 3px;
+        }
+
+        /* FOOTER DE DIAPOSITIVA */
+        .slide-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-top: 1px solid #F1F5F9;
+            padding-top: 1rem;
+            margin-top: 1rem;
+            font-size: 0.8rem;
+            color: #94A3B8;
+        }
+
+        .footer-left {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        /* GRID LAYOUTS */
+        .grid-2 {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1.5rem;
+            align-items: stretch;
+        }
+
+        .grid-3 {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1.25rem;
+            align-items: stretch;
+        }
+
+        .grid-4 {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 1rem;
+            align-items: stretch;
+        }
+
+        /* TARJETAS INTERACTIVAS */
+        .card {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 1.25rem;
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+            transition: all 0.2s ease;
+        }
+
+        .card:hover {
+            border-color: #CBD5E1;
+            box-shadow: var(--shadow-sm);
+        }
+
+        .card-primary {
+            background: #FFF5F7;
+            border: 1px solid #FFE4E8;
+        }
+
+        .card-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 10px;
+            background: #FFFFFF;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.25rem;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+            border: 1px solid rgba(0,0,0,0.05);
+        }
+
+        .card-title {
+            font-size: 1.05rem;
+            font-weight: 700;
+            color: var(--text-dark);
+        }
+
+        .card-desc {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            line-height: 1.45;
+        }
+
+        /* LISTAS CON ESTILO */
+        .styled-list {
+            list-style: none;
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+        }
+
+        .styled-list li {
+            position: relative;
+            padding-left: 1.75rem;
+            font-size: 0.9rem;
+            color: #334155;
+            line-height: 1.45;
+        }
+
+        .styled-list li::before {
+            content: "✓";
+            position: absolute;
+            left: 0;
+            top: 0;
+            color: var(--primary);
+            font-weight: 800;
+            font-size: 0.95rem;
+        }
+
+        .styled-list.numbered {
+            counter-reset: step-counter;
+        }
+
+        .styled-list.numbered li {
+            counter-increment: step-counter;
+        }
+
+        .styled-list.numbered li::before {
+            content: counter(step-counter);
+            background: var(--primary);
+            color: white;
+            font-size: 0.7rem;
+            font-weight: 700;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            top: 1px;
+        }
+
+        /* BADGES DE ESTADO */
+        .status-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.4rem;
+            padding: 0.35rem 0.75rem;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 700;
+            letter-spacing: -0.2px;
+        }
+
+        .badge-new { background: var(--status-new-bg); color: var(--status-new-txt); }
+        .badge-process { background: var(--status-process-bg); color: var(--status-process-txt); }
+        .badge-ready { background: var(--status-ready-bg); color: var(--status-ready-txt); }
+        .badge-resolved { background: var(--status-resolved-bg); color: var(--status-resolved-txt); }
+        .badge-rejected { background: var(--status-rejected-bg); color: var(--status-rejected-txt); }
+
+        /* FLUJOGRAMA VISUAL */
+        .flow-container {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 0.75rem;
+            padding: 1.25rem 0;
+        }
+
+        .flow-step {
+            flex: 1;
+            background: #FFFFFF;
+            border: 2px solid var(--border-color);
+            border-radius: 12px;
+            padding: 1.25rem 1rem;
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0.5rem;
+            box-shadow: var(--shadow-sm);
+            position: relative;
+        }
+
+        .flow-step.highlight {
+            border-color: var(--primary);
+            background: #FFF5F7;
+        }
+
+        .flow-arrow {
+            color: #94A3B8;
+            font-size: 1.5rem;
+            font-weight: 800;
+        }
+
+        /* MOCKUP VISUAL DE INTERFAZ */
+        .ui-mockup {
+            background: #FFFFFF;
+            border: 1px solid #CBD5E1;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: var(--shadow-md);
+        }
+
+        .ui-header {
+            background: #F1F5F9;
+            padding: 0.5rem 0.75rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            border-bottom: 1px solid #E2E8F0;
+        }
+
+        .dot-ui {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #CBD5E1;
+        }
+        .dot-ui.red { background: #EF4444; }
+        .dot-ui.yellow { background: #F59E0B; }
+        .dot-ui.green { background: #10B981; }
+
+        .ui-content {
+            padding: 1rem;
+            font-size: 0.85rem;
+        }
+
+        /* DIAPOSITIVA DE PORTADA */
+        .cover-slide {
+            background: radial-gradient(circle at top right, #1E293B 0%, #0F172A 100%);
+            color: #FFFFFF;
+            justify-content: center;
+            text-align: left;
+            padding: 4rem 4.5rem;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .cover-slide::after {
+            content: "";
+            position: absolute;
+            width: 450px;
+            height: 450px;
+            background: radial-gradient(circle, rgba(234, 4, 78, 0.25) 0%, rgba(234, 4, 78, 0) 70%);
+            top: -100px;
+            right: -100px;
+            border-radius: 50%;
+            pointer-events: none;
+        }
+
+        .cover-logo-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.6rem;
+            background: rgba(234, 4, 78, 0.2);
+            border: 1px solid rgba(234, 4, 78, 0.4);
+            padding: 0.4rem 1rem;
+            border-radius: 30px;
+            font-size: 0.85rem;
+            font-weight: 700;
+            color: #FF8DA4;
+            margin-bottom: 1.75rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .cover-title {
+            font-size: 3.2rem;
+            font-weight: 900;
+            letter-spacing: -1.5px;
+            line-height: 1.1;
+            margin-bottom: 1.25rem;
+        }
+
+        .cover-title span {
+            color: var(--primary);
+            text-shadow: 0 0 25px rgba(234, 4, 78, 0.5);
+        }
+
+        .cover-desc {
+            font-size: 1.25rem;
+            color: #94A3B8;
+            max-width: 680px;
+            line-height: 1.6;
+            margin-bottom: 2.5rem;
+        }
+
+        .cover-stats {
+            display: flex;
+            gap: 2.5rem;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            padding-top: 2rem;
+        }
+
+        .stat-item h4 {
+            font-size: 1.4rem;
+            font-weight: 800;
+            color: #FFFFFF;
+        }
+
+        .stat-item p {
+            font-size: 0.85rem;
+            color: #94A3B8;
+        }
+
+        /* BARRA INFERIOR DE NAVEGACIÓN */
+        .bottom-nav {
+            position: fixed;
+            bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 1.5rem;
+            background: rgba(15, 23, 42, 0.9);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            padding: 0.5rem 1.25rem;
+            border-radius: 50px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.4);
+            z-index: 1000;
+        }
+
+        .nav-btn {
+            background: transparent;
+            border: none;
+            color: #FFFFFF;
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            font-size: 1.1rem;
+            transition: all 0.2s;
+        }
+
+        .nav-btn:hover {
+            background: rgba(255, 255, 255, 0.15);
+            color: var(--primary);
+        }
+
+        .nav-btn:disabled {
+            opacity: 0.3;
+            cursor: not-allowed;
+        }
+
+        .slide-counter {
+            color: #FFFFFF;
+            font-size: 0.9rem;
+            font-weight: 600;
+            min-width: 70px;
+            text-align: center;
+            letter-spacing: 0.5px;
+        }
+
+        /* DRAWER DEL ÍNDICE */
+        .index-modal {
+            position: fixed;
+            top: 60px;
+            left: 0;
+            width: 340px;
+            height: calc(100vh - 60px);
+            background: #0F172A;
+            border-right: 1px solid rgba(255,255,255,0.1);
+            z-index: 999;
+            transform: translateX(-100%);
+            transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+            padding: 1.5rem;
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+            box-shadow: 10px 0 30px rgba(0,0,0,0.5);
+        }
+
+        .index-modal.open {
+            transform: translateX(0);
+        }
+
+        .index-header {
+            color: #FFFFFF;
+            font-size: 1.1rem;
+            font-weight: 700;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+            padding-bottom: 0.75rem;
+        }
+
+        .index-list {
+            overflow-y: auto;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 0.4rem;
+        }
+
+        .index-item {
+            padding: 0.65rem 0.85rem;
+            border-radius: 8px;
+            color: #94A3B8;
+            font-size: 0.85rem;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            transition: all 0.2s;
+        }
+
+        .index-item:hover, .index-item.active {
+            background: rgba(234, 4, 78, 0.15);
+            color: #FFFFFF;
+            font-weight: 600;
+        }
+
+        .index-num {
+            background: rgba(255,255,255,0.1);
+            padding: 0.15rem 0.4rem;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            font-weight: 700;
+            color: var(--primary);
+        }
+
+        /* ESTILOS PARA IMPRESIÓN Y EXPORTACIÓN A PDF */
+        @media print {
+            body {
+                background: white !important;
+                height: auto !important;
+                overflow: visible !important;
+            }
+            .top-bar, .bottom-nav, .progress-container, .index-modal {
+                display: none !important;
+            }
+            .deck-container {
+                position: static !important;
+                width: 100% !important;
+                max-width: none !important;
+                height: auto !important;
+                margin: 0 !important;
+            }
+            .slide {
+                position: relative !important;
+                display: flex !important;
+                width: 100% !important;
+                height: 100vh !important;
+                page-break-after: always;
+                box-shadow: none !important;
+                border-radius: 0 !important;
+                border: none !important;
+                padding: 3rem !important;
+            }
+            @page {
+                size: landscape;
+                margin: 0;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- BARRA SUPERIOR -->
+    <header class="top-bar">
+        <div class="brand-logo">
+            <span class="dot"></span>
+            Pedidos<span>Ya</span>
+            <div class="badge-system">Legal & Compliance Chile</div>
+        </div>
+        <div class="top-controls">
+            <button class="btn-ctrl" onclick="toggleIndex()" title="Ver índice de diapositivas (Tecla M)">
+                📑 Índice
+            </button>
+            <button class="btn-ctrl" onclick="toggleFullscreen()" title="Pantalla completa (Tecla F)">
+                ⛶ Pantalla Completa
+            </button>
+            <button class="btn-ctrl btn-primary" onclick="window.print()" title="Imprimir o Exportar Diapositivas a PDF">
+                🖨️ Exportar PDF
+            </button>
+        </div>
+    </header>
+
+    <!-- BARRA DE PROGRESO -->
+    <div class="progress-container">
+        <div class="progress-bar" id="progressBar"></div>
+    </div>
+
+    <!-- CAJÓN DE ÍNDICE LATERAL -->
+    <aside class="index-modal" id="indexModal">
+        <div class="index-header">
+            <span>Índice del Manual</span>
+            <button style="background:none;border:none;color:#FFF;cursor:pointer;font-size:1.2rem;" onclick="toggleIndex()">✕</button>
+        </div>
+        <div class="index-list" id="indexList"></div>
+    </aside>
+
+    <!-- CONTENEDOR PRINCIPAL DE DIAPOSITIVAS -->
+    <main class="deck-container" id="deckContainer">
+
+        <!-- SLIDE 1: PORTADA -->
+        <section class="slide cover-slide active" data-title="Portada">
+            <div>
+                <div class="cover-logo-pill">
+                    ⚖️ Manual de Operación Oficial
+                </div>
+                <h1 class="cover-title">
+                    Bandeja de Requerimientos <span>Legales</span>
+                </h1>
+                <p class="cover-desc">
+                    Guía de operación ejecutiva para el Analista Legal de PedidosYa Chile. Gestión automatizada, análisis judicial, derivación técnica y despacho de respuestas a autoridades públicas.
+                </p>
+                <div class="cover-stats">
+                    <div class="stat-item">
+                        <h4>PDI & Carabineros</h4>
+                        <p>Entidades Policiales</p>
+                    </div>
+                    <div class="stat-item">
+                        <h4>Ministerio Público</h4>
+                        <p>Fiscalías de Chile</p>
+                    </div>
+                    <div class="stat-item">
+                        <h4>Google Workspace</h4>
+                        <p>Ecosistema Seguro</p>
+                    </div>
+                    <div class="stat-item">
+                        <h4>Versión 2026</h4>
+                        <p>100% Automatizado</p>
+                    </div>
+                </div>
+            </div>
+            <div class="slide-footer" style="color: #64748B; border-color: rgba(255,255,255,0.1);">
+                <span>PedidosYa Legal & Compliance • Confidencial</span>
+                <span>Usa las flechas ← → del teclado para navegar</span>
+            </div>
+        </section>
+
+        <!-- SLIDE 2: PROPÓSITO Y OBJETIVOS -->
+        <section class="slide" data-title="Propósito y Objetivos">
+            <div class="slide-header">
+                <div>
+                    <div class="slide-tag">📌 Módulo 1 • Fundamentos</div>
+                    <h2 class="slide-title">Propósito y Objetivos del Sistema</h2>
+                    <p class="slide-subtitle">Centralización, trazabilidad judicial y seguridad en la entrega de información</p>
+                </div>
+                <div class="slide-number-chip">02 / 14</div>
+            </div>
+            <div class="slide-body">
+                <div class="grid-3">
+                    <div class="card card-primary">
+                        <div class="card-icon">⚡</div>
+                        <h3 class="card-title">Centralización Total</h3>
+                        <p class="card-desc">
+                            Reemplaza las bandejas de correo aisladas por un panel web unificado que centraliza todos los oficios que ingresan desde el formulario institucional de PedidosYa.
+                        </p>
+                    </div>
+                    <div class="card">
+                        <div class="card-icon">🛡️</div>
+                        <h3 class="card-title">Criterio y Rigor Legal</h3>
+                        <p class="card-desc">
+                            Permite evaluar la legalidad del oficio: firmas válidas de jueces o fiscales, nexo causal explícito y suficiencia de antecedentes antes de cualquier entrega de datos.
+                        </p>
+                    </div>
+                    <div class="card">
+                        <div class="card-icon">🤖</div>
+                        <h3 class="card-title">Automatización de Respuestas</h3>
+                        <p class="card-desc">
+                            Despacha correos formales con diseño institucional en HTML, adjuntando PDFs consolidados de respuesta o notificaciones fundadas de rechazo de forma automática.
+                        </p>
+                    </div>
+                </div>
+            </div>
+            <div class="slide-footer">
+                <div class="footer-left"><span>🏢 PedidosYa Chile • Sistema Legal</span></div>
+                <div>Garantía de cumplimiento procesal y protección de datos</div>
+            </div>
+        </section>
+
+        <!-- SLIDE 3: ARQUITECTURA DEL FLUJO -->
+        <section class="slide" data-title="Arquitectura del Flujo">
+            <div class="slide-header">
+                <div>
+                    <div class="slide-tag">⚙️ Módulo 1 • Arquitectura</div>
+                    <h2 class="slide-title">Flujo Integral del Requerimiento</h2>
+                    <p class="slide-subtitle">Desde la recepción del oficio hasta la notificación formal de cierre</p>
+                </div>
+                <div class="slide-number-chip">03 / 14</div>
+            </div>
+            <div class="slide-body">
+                <div class="flow-container">
+                    <div class="flow-step">
+                        <div style="font-size:1.75rem;">📩</div>
+                        <strong style="font-size:0.9rem;">1. Ingreso</strong>
+                        <p style="font-size:0.75rem; color:#64748B;">Correo de autoridad o Formulario Google</p>
+                    </div>
+                    <div class="flow-arrow">➔</div>
+                    <div class="flow-step">
+                        <div style="font-size:1.75rem;">📊</div>
+                        <strong style="font-size:0.9rem;">2. Registro</strong>
+                        <p style="font-size:0.75rem; color:#64748B;">Asignación de ID único (REQ-I-001) en Sheets</p>
+                    </div>
+                    <div class="flow-arrow">➔</div>
+                    <div class="flow-step highlight">
+                        <div style="font-size:1.75rem;">🖥️</div>
+                        <strong style="font-size:0.9rem; color:var(--primary);">3. Análisis Legal</strong>
+                        <p style="font-size:0.75rem; color:#64748B;">Dashboard: Aceptar con tags o Rechazar</p>
+                    </div>
+                    <div class="flow-arrow">➔</div>
+                    <div class="flow-step">
+                        <div style="font-size:1.75rem;">📤</div>
+                        <strong style="font-size:0.9rem;">4. Despacho</strong>
+                        <p style="font-size:0.75rem; color:#64748B;">Correo automático con PDF oficial a la entidad</p>
+                    </div>
+                </div>
+                <div class="card" style="margin-top:1rem; background:#F8FAFC;">
+                    <div style="display:flex; justify-content:space-between; align-items:center;">
+                        <span style="font-size:0.85rem; font-weight:600; color:#334155;">Tecnologías integradas:</span>
+                        <div style="display:flex; gap:0.5rem;">
+                            <span class="status-badge" style="background:#EEF2FF; color:#4338CA;">Google Workspace</span>
+                            <span class="status-badge" style="background:#ECFDF5; color:#047857;">Google Apps Script</span>
+                            <span class="status-badge" style="background:#FFF1F2; color:#BE123C;">HTML5 Dashboard Web</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="slide-footer">
+                <div class="footer-left"><span>Ecosistema Cloud Seguro</span></div>
+                <div>Cero almacenamiento en servidores no autorizados</div>
+            </div>
+        </section>
+
+        <!-- SLIDE 4: ESTADOS DEL REQUERIMIENTO -->
+        <section class="slide" data-title="Estados y Ciclo de Vida">
+            <div class="slide-header">
+                <div>
+                    <div class="slide-tag">🏷️ Módulo 2 • Estados</div>
+                    <h2 class="slide-title">Estados Oficiales y Ciclo de Vida</h2>
+                    <p class="slide-subtitle">Identificación visual inmediata en la bandeja operativa</p>
+                </div>
+                <div class="slide-number-chip">04 / 14</div>
+            </div>
+            <div class="slide-body">
+                <div class="grid-2">
+                    <div class="card" style="border-left: 5px solid #0369A1;">
+                        <div style="display:flex; justify-content:space-between; align-items:center;">
+                            <span class="status-badge badge-new">Nuevo</span>
+                            <span style="font-size:0.75rem; color:#64748B;">Etapa Inicial</span>
+                        </div>
+                        <p class="card-desc">El oficio ha sido registrado en la base de datos pero aún no ha sido analizado por el analista legal. Requiere evaluar admisibilidad.</p>
+                    </div>
+                    <div class="card" style="border-left: 5px solid #92400E;">
+                        <div style="display:flex; justify-content:space-between; align-items:center;">
+                            <span class="status-badge badge-process">En Proceso</span>
+                            <span style="font-size:0.75rem; color:#64748B;">Etapa Técnica</span>
+                        </div>
+                        <p class="card-desc">El analista aceptó el caso, seleccionó las etiquetas técnicas y el sistema notificó formalmente a la autoridad sobre la recepción.</p>
+                    </div>
+                    <div class="card" style="border-left: 5px solid #166534;">
+                        <div style="display:flex; justify-content:space-between; align-items:center;">
+                            <span class="status-badge badge-resolved">Resuelto</span>
+                            <span style="font-size:0.75rem; color:#64748B;">Etapa Final Exitosa</span>
+                        </div>
+                        <p class="card-desc">Se cargó el PDF con la extracción técnica y el backend despachó automáticamente el correo formal con el adjunto a la autoridad.</p>
+                    </div>
+                    <div class="card" style="border-left: 5px solid #991B1B;">
+                        <div style="display:flex; justify-content:space-between; align-items:center;">
+                            <span class="status-badge badge-rejected">Rechazado</span>
+                            <span style="font-size:0.75rem; color:#64748B;">Etapa de Denegación</span>
+                        </div>
+                        <p class="card-desc">El oficio no cumplía con los estándares legales obligatorios. El sistema notificó de inmediato el motivo formal y los pasos para subsanarlo.</p>
+                    </div>
+                </div>
+            </div>
+            <div class="slide-footer">
+                <div class="footer-left"><span>Trazabilidad en tiempo real</span></div>
+                <div>Colores consistentes en dashboard, modales y correos</div>
+            </div>
+        </section>
+
+        <!-- SLIDE 5: ENTORNO DEL DASHBOARD -->
+        <section class="slide" data-title="Entorno del Dashboard">
+            <div class="slide-header">
+                <div>
+                    <div class="slide-tag">🖥️ Módulo 2 • Interfaz</div>
+                    <h2 class="slide-title">Entorno de Trabajo del Analista</h2>
+                    <p class="slide-subtitle">Distribución estratégica de las herramientas en pantalla</p>
+                </div>
+                <div class="slide-number-chip">05 / 14</div>
+            </div>
+            <div class="slide-body">
+                <div class="grid-2" style="align-items:center;">
+                    <div class="ui-mockup">
+                        <div class="ui-header">
+                            <span class="dot-ui red"></span>
+                            <span class="dot-ui yellow"></span>
+                            <span class="dot-ui green"></span>
+                            <span style="font-size:0.75rem; font-weight:600; color:#475569; margin-left:0.5rem;">PedidosYa Legal - Panel de Gestión</span>
+                        </div>
+                        <div class="ui-content" style="background:#F8FAFC; min-height:220px; display:flex; gap:0.5rem;">
+                            <div style="width:25%; background:#FFF; border:1px solid #E2E8F0; border-radius:6px; padding:0.5rem; font-size:0.7rem;">
+                                <strong>Navegación</strong><br>
+                                <span style="color:var(--primary); font-weight:700;">• Dashboard</span><br>
+                                <span>• Usuarios</span><br>
+                                <span>• Riders</span>
+                            </div>
+                            <div style="width:75%; display:flex; flex-direction:column; gap:0.4rem;">
+                                <div style="background:#FFF; border:1px solid #E2E8F0; padding:0.4rem; border-radius:6px; font-size:0.7rem;">
+                                    🔍 Barra de Búsqueda y Filtros Unificados
+                                </div>
+                                <div style="background:#FFF; border:1px solid #E2E8F0; padding:0.5rem; border-radius:6px; font-size:0.7rem; flex:1;">
+                                    📋 <strong>Tabla de Tickets</strong> (REQ-I-001 | PDI | Nuevo)
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="styled-list">
+                        <li><strong>1. Sidebar Lateral:</strong> Segmenta rápidamente la bandeja por tipo de sujeto involucrado (Todos los casos, solo Usuarios o solo Riders).</li>
+                        <li><strong>2. Barra Superior Unificada:</strong> Contiene búsqueda por palabras clave, fechas, entidad emisora y estado actual.</li>
+                        <li><strong>3. Tabla Dinámica:</strong> Vista compacta con scroll inteligente (55% de pantalla), optimizada para pantallas corporativas.</li>
+                        <li><strong>4. Campanita de Notificaciones:</strong> Registro interactivo de envíos automáticos de correos y avisos del sistema en vivo.</li>
+                    </div>
+                </div>
+            </div>
+            <div class="slide-footer">
+                <div class="footer-left"><span>Optimizado para Google Chrome</span></div>
+                <div>Zoom nativo al 90% para visualización de alta densidad</div>
+            </div>
+        </section>
+
+        <!-- SLIDE 6: FILTROS Y BÚSQUEDA -->
+        <section class="slide" data-title="Búsqueda y Filtros">
+            <div class="slide-header">
+                <div>
+                    <div class="slide-tag">🔍 Módulo 2 • Herramientas</div>
+                    <h2 class="slide-title">Panel de Búsqueda y Filtros Unificados</h2>
+                    <p class="slide-subtitle">Localización instantánea de expedientes y requerimientos judiciales</p>
+                </div>
+                <div class="slide-number-chip">06 / 14</div>
+            </div>
+            <div class="slide-body">
+                <div class="grid-4">
+                    <div class="card">
+                        <div class="card-icon">🔎</div>
+                        <h4 class="card-title">Búsqueda General</h4>
+                        <p class="card-desc">Busca en tiempo real por ID de ticket (ej: <code>REQ-I-024</code>), correo electrónico, nombres del imputado o patente vehicular.</p>
+                    </div>
+                    <div class="card">
+                        <div class="card-icon">📅</div>
+                        <h4 class="card-title">Filtro por Fecha</h4>
+                        <p class="card-desc">Aísla requerimientos recibidos en una fecha específica para cuadratura de plazos judiciales perentorios.</p>
+                    </div>
+                    <div class="card">
+                        <div class="card-icon">🏛️</div>
+                        <h4 class="card-title">Filtro por Entidad</h4>
+                        <p class="card-desc">Filtra en un clic los casos emitidos exclusivamente por <strong>PDI</strong>, <strong>Carabineros</strong> o <strong>Fiscalía</strong>.</p>
+                    </div>
+                    <div class="card">
+                        <div class="card-icon">🔄</div>
+                        <h4 class="card-title">Recarga en Vivo</h4>
+                        <p class="card-desc">El botón <strong>Recargar</strong> sincroniza directamente con Google Sheets sin necesidad de refrescar la página web.</p>
+                    </div>
+                </div>
+                <div class="card card-primary" style="margin-top:1.25rem;">
+                    <strong style="color:var(--primary); font-size:0.9rem;">💡 Tip Operativo para el Analista:</strong>
+                    <span style="font-size:0.85rem; color:#475569;">Los filtros son acumulativos. Puedes filtrar simultáneamente por "PDI" + estado "Nuevo" + escribir un apellido para encontrar un caso exacto en menos de 2 segundos. Usa "Limpiar Filtros" para reiniciar.</span>
+                </div>
+            </div>
+            <div class="slide-footer">
+                <div class="footer-left"><span>Filtros instantáneos en el cliente</span></div>
+                <div>Sin latencia ni tiempos de espera de servidor</div>
+            </div>
+        </section>
+
+        <!-- SLIDE 7: PASO 1 - ANÁLISIS DEL OFICIO -->
+        <section class="slide" data-title="Paso 1: Análisis del Oficio">
+            <div class="slide-header">
+                <div>
+                    <div class="slide-tag">📋 Módulo 3 • Paso a Paso</div>
+                    <h2 class="slide-title">Paso 1: Recepción y Análisis del Oficio</h2>
+                    <p class="slide-subtitle">Examen de admisibilidad jurídica de la orden judicial</p>
+                </div>
+                <div class="slide-number-chip">07 / 14</div>
+            </div>
+            <div class="slide-body">
+                <div class="grid-2">
+                    <div class="card">
+                        <h3 class="card-title" style="color:var(--primary);">Acción en el Dashboard:</h3>
+                        <ol class="styled-list numbered">
+                            <li>Localiza el requerimiento con estado <strong>Nuevo</strong> en la bandeja.</li>
+                            <li>Haz clic en el botón <strong>Ver Detalles</strong> al final de la fila.</li>
+                            <li>Se desplegará el modal estructurado con la información del oficio.</li>
+                            <li>Haz clic en el botón inferior <strong>📄 Ver doc. adjunto</strong> para abrir el PDF original de la orden judicial en Drive.</li>
+                        </ol>
+                    </div>
+                    <div class="card" style="background:#FFF;">
+                        <h3 class="card-title" style="color:#0F172A;">Criterios Jurídicos de Admisibilidad:</h3>
+                        <ul class="styled-list">
+                            <li><strong>Firma válida:</strong> Que cuente con firma electrónica avanzada o timbre oficial del tribunal / fiscalía correspondiente.</li>
+                            <li><strong>Fundamentación suficiente:</strong> Nexo causal claro entre el hecho investigado y la cuenta de PedidosYa solicitada.</li>
+                            <li><strong>Datos mínimos:</strong> Presencia de RUT, correo electrónico, teléfono o patente para individualizar al sujeto.</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+            <div class="slide-footer">
+                <div class="footer-left"><span>Seguridad en la apertura de adjuntos</span></div>
+                <div>Lectura en modo sandbox seguro dentro de Google Drive</div>
+            </div>
+        </section>
+
+        <!-- SLIDE 8: CAMPOS DINÁMICOS RIDERS VS USUARIOS -->
+        <section class="slide" data-title="Campos Rider vs Usuario">
+            <div class="slide-header">
+                <div>
+                    <div class="slide-tag">👥 Módulo 3 • Casos Especiales</div>
+                    <h2 class="slide-title">Visualización Dinámica: Rider vs. Usuario</h2>
+                    <p class="slide-subtitle">Adaptación automática del modal según el tipo de investigado</p>
+                </div>
+                <div class="slide-number-chip">08 / 14</div>
+            </div>
+            <div class="slide-body">
+                <div class="grid-2">
+                    <div class="card" style="border-top: 4px solid #0284C7;">
+                        <div style="display:flex; align-items:center; gap:0.5rem;">
+                            <span style="font-size:1.5rem;">🛵</span>
+                            <h3 class="card-title">Requerimiento de Rider (Repartidor)</h3>
+                        </div>
+                        <ul class="styled-list">
+                            <li>El sistema muestra de forma destacada el campo de <strong>Patente del Vehículo</strong> registrado en la solicitud.</li>
+                            <li>Datos de identificación del repartidor (RUT, Nombres, Apellidos).</li>
+                            <li>Facilita la verificación cruzada de vehículos involucrados en procedimientos de tránsito o delitos flagrantes.</li>
+                        </ul>
+                    </div>
+                    <div class="card" style="border-top: 4px solid #7C3AED;">
+                        <div style="display:flex; align-items:center; gap:0.5rem;">
+                            <span style="font-size:1.5rem;">👤</span>
+                            <h3 class="card-title">Requerimiento de Usuario (Cliente)</h3>
+                        </div>
+                        <ul class="styled-list">
+                            <li>Muestra el bloque exclusivo <strong>Conexión con la Empresa</strong> con fechas e IPs de último acceso registradas.</li>
+                            <li>Campo de <strong>Información Adicional Recibida</strong> proporcionada por la fiscalía (órdenes de compra, ID de pedidos, etc.).</li>
+                            <li>Permite al analista evaluar fraudes con tarjetas de crédito o suplantación de identidad.</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+            <div class="slide-footer">
+                <div class="footer-left"><span>Adaptabilidad contextual</span></div>
+                <div>Solo se visualizan los campos relevantes para cada investigación</div>
+            </div>
+        </section>
+
+        <!-- SLIDE 9: PASO 2 - ACEPTACIÓN Y DERIVACIÓN -->
+        <section class="slide" data-title="Paso 2: Aceptar y Derivar">
+            <div class="slide-header">
+                <div>
+                    <div class="slide-tag">🏷️ Módulo 3 • Derivación</div>
+                    <h2 class="slide-title">Paso 2: Aceptar y Derivar el Caso</h2>
+                    <p class="slide-subtitle">Selección de etiquetas técnicas (tags) y notificación automática</p>
+                </div>
+                <div class="slide-number-chip">09 / 14</div>
+            </div>
+            <div class="slide-body">
+                <div class="grid-2">
+                    <div class="card">
+                        <h3 class="card-title" style="color:var(--primary);">Procedimiento de Derivación:</h3>
+                        <ol class="styled-list numbered">
+                            <li>En el modal del requerimiento admisible, haz clic en <strong>Aceptar Req.</strong></li>
+                            <li>Selecciona del desplegable los datos a requerir al área técnica (ej: <em>RUT, Fotografía Rostro, IPs, Teléfono</em>).</li>
+                            <li>Haz clic en <strong>Agregar</strong> para generar las etiquetas visuales (tags azules).</li>
+                            <li>Si aplica, escribe instrucciones temporales en <em>Comentarios adicionales</em> (ej: "solo rango 1 al 5 de enero").</li>
+                            <li>Presiona <strong>Derivar Caso</strong>.</li>
+                        </ol>
+                    </div>
+                    <div class="card card-primary">
+                        <h3 class="card-title" style="color:var(--primary-dark);">Acciones Automáticas del Sistema:</h3>
+                        <ul class="styled-list">
+                            <li>El caso pasa automáticamente al estado <strong>En Proceso</strong> (etiqueta amarilla).</li>
+                            <li>Se guarda el desglose exacto de etiquetas técnicas solicitadas en la base central.</li>
+                            <li><strong>Despacho de Correo Institucional:</strong> El backend envía de inmediato un correo en HTML a la entidad informando que la solicitud fue acogida a trámite formal con número de seguimiento.</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+            <div class="slide-footer">
+                <div class="footer-left"><span>Estandarización de pedidos a Sistemas</span></div>
+                <div>Evita discrepancias y retrabajos en la extracción de datos</div>
+            </div>
+        </section>
+
+        <!-- SLIDE 10: PASO 3 - RESOLUCIÓN Y ENVÍO DE PDF -->
+        <section class="slide" data-title="Paso 3: Carga de Respuesta">
+            <div class="slide-header">
+                <div>
+                    <div class="slide-tag">📤 Módulo 3 • Cierre Exitoso</div>
+                    <h2 class="slide-title">Paso 3: Carga de Respuesta y Resolución</h2>
+                    <p class="slide-subtitle">Adjuntar informe pericial PDF y despacho oficial a la autoridad</p>
+                </div>
+                <div class="slide-number-chip">10 / 14</div>
+            </div>
+            <div class="slide-body">
+                <div class="grid-2">
+                    <div class="card">
+                        <h3 class="card-title" style="color:#166534;">Flujo de Carga del Informe:</h3>
+                        <ol class="styled-list numbered">
+                            <li>Ubica el requerimiento <strong>En Proceso</strong> y abre <strong>Ver Detalles</strong>.</li>
+                            <li>Verás habilitado el panel interactivo verde <strong>Cargar Respuesta del Requerimiento</strong>.</li>
+                            <li>Presiona <strong>Cargar respuesta (PDF)</strong> y selecciona el informe final emitido.</li>
+                            <li>El sistema valida que el formato sea estrictamente un archivo PDF.</li>
+                            <li>Haz clic en el botón verde <strong>Finalizar y enviar respuesta</strong>.</li>
+                        </ol>
+                    </div>
+                    <div class="card" style="background:#F0FDF4; border-color:#BBF7D0;">
+                        <h3 class="card-title" style="color:#15803D;">Resultado y Automatización:</h3>
+                        <ul class="styled-list">
+                            <li>El archivo se almacena de forma blindada en la carpeta oficial de Google Drive.</li>
+                            <li>El estado del ticket cambia a <strong>Resuelto</strong> (verde) de forma persistente.</li>
+                            <li>Se envía automáticamente el correo institucional final a la PDI, Carabineros o Fiscalía con el <strong>PDF oficial adjunto</strong>.</li>
+                            <li>Se genera una notificación de confirmación con el cuerpo del correo en pantalla.</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+            <div class="slide-footer">
+                <div class="footer-left"><span>Cierre formal garantizado</span></div>
+                <div>Sin intervención manual de Outlook ni riesgos de adjuntos erróneos</div>
+            </div>
+        </section>
+
+        <!-- SLIDE 11: PASO 4 - RECHAZO FUNDADO -->
+        <section class="slide" data-title="Paso 4: Rechazo Formal">
+            <div class="slide-header">
+                <div>
+                    <div class="slide-tag">❌ Módulo 3 • Denegación Legal</div>
+                    <h2 class="slide-title">Paso 4: Rechazo Formal de Requerimientos</h2>
+                    <p class="slide-subtitle">Tratamiento de oficios incompletos, sin firma o inadmisibles</p>
+                </div>
+                <div class="slide-number-chip">11 / 14</div>
+            </div>
+            <div class="slide-body">
+                <div class="grid-2">
+                    <div class="card">
+                        <h3 class="card-title" style="color:#991B1B;">Procedimiento de Rechazo:</h3>
+                        <ol class="styled-list numbered">
+                            <li>En el modal de detalles, haz clic en el botón rojo <strong>Rechazar Req.</strong></li>
+                            <li>Selecciona la causal en el selector desplegable:
+                                <ul style="margin-top:0.3rem; margin-left:1rem; font-size:0.8rem; color:#475569;">
+                                    <li>• <em>Resolución Judicial Adjunta inválida</em></li>
+                                    <li>• <em>Fundamentación de conexión poco concisa</em></li>
+                                    <li>• <em>Datos insuficientes para la búsqueda</em></li>
+                                    <li>• <em>Otro (especifique)</em> ➔ Abre caja de texto libre</li>
+                                </ul>
+                            </li>
+                            <li>Haz clic en <strong>Confirmar Rechazo</strong>.</li>
+                        </ol>
+                    </div>
+                    <div class="card" style="background:#FEF2F2; border-color:#FECACA;">
+                        <h3 class="card-title" style="color:#B91C1C;">Impacto Legal y Comunicación:</h3>
+                        <ul class="styled-list">
+                            <li>El requerimiento pasa a estado <strong>Rechazado</strong> (rojo) en la base de datos.</li>
+                            <li><strong>Despacho Notificación Jurídica:</strong> El sistema envía de forma inmediata un correo oficial al emisor judicial indicando el fundamento de la denegación.</li>
+                            <li>Incluye las directrices y el enlace al formulario oficial para que la autoridad reingrese la solicitud subsanada.</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+            <div class="slide-footer">
+                <div class="footer-left"><span>Protección jurídica institucional</span></div>
+                <div>Respaldo normativo estricto conforme a la Ley chilena</div>
+            </div>
+        </section>
+
+        <!-- SLIDE 12: TRAZABILIDAD Y NOTIFICACIONES -->
+        <section class="slide" data-title="Trazabilidad y Notificaciones">
+            <div class="slide-header">
+                <div>
+                    <div class="slide-tag">🔔 Módulo 4 • Auditoría</div>
+                    <h2 class="slide-title">Trazabilidad y Avisos en Tiempo Real</h2>
+                    <p class="slide-subtitle">Control y supervisión de las comunicaciones despachadas</p>
+                </div>
+                <div class="slide-number-chip">12 / 14</div>
+            </div>
+            <div class="slide-body">
+                <div class="grid-2">
+                    <div class="card">
+                        <div class="card-icon">🔔</div>
+                        <h3 class="card-title">Campanita de Notificaciones</h3>
+                        <p class="card-desc">
+                            Ubicada en la esquina superior derecha junto al perfil. Mantiene un histórico dinámico de las últimas acciones completadas (aceptaciones, derivaciones, cierres y rechazos).
+                        </p>
+                        <div style="background:#FFF; border:1px solid #E2E8F0; padding:0.75rem; border-radius:8px; font-size:0.8rem; color:#334155; margin-top:0.5rem;">
+                            🟢 <strong>Notificación:</strong> Correo enviado a fiscalia@minpublico.cl por ticket REQ-F-015.
+                        </div>
+                    </div>
+                    <div class="card">
+                        <div class="card-icon">💬</div>
+                        <h3 class="card-title">Burbuja Flotante de Confirmación</h3>
+                        <p class="card-desc">
+                            Cada vez que ejecutas un despacho formal, una ventana emergente en la esquina inferior te confirma:
+                        </p>
+                        <ul class="styled-list" style="margin-top:0.5rem;">
+                            <li><strong>Destinatario:</strong> Correo institucional de destino.</li>
+                            <li><strong>Asunto:</strong> Asunto oficial generado con correlativo.</li>
+                            <li><strong>Vista Previa del Cuerpo:</strong> Mensaje HTML despachado.</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+            <div class="slide-footer">
+                <div class="footer-left"><span>Auditoría completa</span></div>
+                <div>Cero dudas sobre el estado de entrega a las autoridades</div>
+            </div>
+        </section>
+
+        <!-- SLIDE 13: SEGURIDAD Y CONFIDENCIALIDAD -->
+        <section class="slide" data-title="Seguridad y Confidencialidad">
+            <div class="slide-header">
+                <div>
+                    <div class="slide-tag">🔒 Módulo 5 • Cumplimiento</div>
+                    <h2 class="slide-title">Seguridad y Cumplimiento Normativo</h2>
+                    <p class="slide-subtitle">Directrices estrictas para el manejo de expedientes judiciales y datos personales</p>
+                </div>
+                <div class="slide-number-chip">13 / 14</div>
+            </div>
+            <div class="slide-body">
+                <div class="grid-3">
+                    <div class="card">
+                        <div class="card-icon">🔐</div>
+                        <h3 class="card-title">Secreto Procesal</h3>
+                        <p class="card-desc">
+                            Las investigaciones del Ministerio Público están bajo reserva judicial (Art. 182 del Código Procesal Penal). Queda terminantemente prohibido divulgar o descargar antecedentes a dispositivos no corporativos.
+                        </p>
+                    </div>
+                    <div class="card">
+                        <div class="card-icon">🛡️</div>
+                        <h3 class="card-title">Acceso por Dominio</h3>
+                        <p class="card-desc">
+                            El acceso a la aplicación web está limitado exclusivamente a cuentas del dominio corporativo autorizadas por el equipo Legal de PedidosYa.
+                        </p>
+                    </div>
+                    <div class="card">
+                        <div class="card-icon">📂</div>
+                        <h3 class="card-title">Integridad de la Planilla</h3>
+                        <p class="card-desc">
+                            No altere manualmente las 19 columnas de la hoja <code>dashboard-status</code>. Las funciones del backend leen y escriben en lote garantizando la integridad referencial.
+                        </p>
+                    </div>
+                </div>
+            </div>
+            <div class="slide-footer">
+                <div class="footer-left"><span>Política Corporativa PedidosYa Legal</span></div>
+                <div>Cumplimiento estricto de la Ley de Protección de la Vida Privada</div>
+            </div>
+        </section>
+
+        <!-- SLIDE 14: RESUMEN Y CHECKLIST -->
+        <section class="slide" data-title="Checklist del Analista">
+            <div class="slide-header">
+                <div>
+                    <div class="slide-tag">✅ Módulo 5 • Operaciones</div>
+                    <h2 class="slide-title">Checklist Operativo Diario del Analista</h2>
+                    <p class="slide-subtitle">Protocolo de inicio y cierre de jornada para el equipo legal</p>
+                </div>
+                <div class="slide-number-chip">14 / 14</div>
+            </div>
+            <div class="slide-body">
+                <div class="grid-2">
+                    <div class="card">
+                        <h3 class="card-title" style="color:var(--primary);">☀️ Inicio de Jornada</h3>
+                        <ul class="styled-list">
+                            <li>Abrir el Dashboard y presionar el botón <strong>Recargar</strong> para sincronizar ingresos de la noche.</li>
+                            <li>Filtrar por estado <strong>Nuevo</strong> y priorizar requerimientos de <strong>Carabineros/PDI</strong> por flagrancia.</li>
+                            <li>Validar firmas y documentos adjuntos de cada ticket nuevo.</li>
+                            <li>Derivar inmediatamente a sistemas los oficios urgentes usando los tags pertinentes.</li>
+                        </ul>
+                    </div>
+                    <div class="card">
+                        <h3 class="card-title" style="color:#0F172A;">🌙 Cierre de Jornada</h3>
+                        <ul class="styled-list">
+                            <li>Revisar los requerimientos en estado <strong>En Proceso</strong> para verificar respuestas técnicas listas.</li>
+                            <li>Cargar los PDFs de informe y despachar los correos de cierre a las fiscalías.</li>
+                            <li>Verificar que ningún requerimiento con plazo perentorio judicial quede desatendido.</li>
+                            <li>Comprobar en la campana de notificaciones que los correos automáticos hayan salido con éxito.</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+            <div class="slide-footer">
+                <div class="footer-left"><span>¡Listo para operar! • PedidosYa Legal Chile</span></div>
+                <div>Soporte técnico y normativo: legal@pedidosya.com</div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- BARRA INFERIOR DE NAVEGACIÓN -->
+    <nav class="bottom-nav">
+        <button class="nav-btn" id="btnPrev" onclick="prevSlide()" title="Anterior (Flecha izquierda)">◀</button>
+        <span class="slide-counter" id="slideCounter">1 / 14</span>
+        <button class="nav-btn" id="btnNext" onclick="nextSlide()" title="Siguiente (Flecha derecha o Espacio)">▶</button>
+    </nav>
+
+    <!-- SCRIPT DE CONTROL DE PRESENTACIÓN -->
+    <script>
+        const slides = document.querySelectorAll('.slide');
+        const progressBar = document.getElementById('progressBar');
+        const slideCounter = document.getElementById('slideCounter');
+        const btnPrev = document.getElementById('btnPrev');
+        const btnNext = document.getElementById('btnNext');
+        const indexModal = document.getElementById('indexModal');
+        const indexList = document.getElementById('indexList');
+
+        let currentSlideIndex = 0;
+        const totalSlides = slides.length;
+
+        // Inicializar índice
+        function initIndex() {
+            indexList.innerHTML = '';
+            slides.forEach((slide, idx) => {
+                const title = slide.getAttribute('data-title') || `Diapositiva ${idx + 1}`;
+                const item = document.createElement('div');
+                item.className = `index-item ${idx === 0 ? 'active' : ''}`;
+                item.onclick = () => { goToSlide(idx); toggleIndex(); };
+                item.innerHTML = `<span class="index-num">${String(idx + 1).padStart(2, '0')}</span> <span>${title}</span>`;
+                indexList.appendChild(item);
+            });
+        }
+
+        // Actualizar visualización de diapositiva
+        function updateSlide() {
+            slides.forEach((slide, idx) => {
+                slide.classList.toggle('active', idx === currentSlideIndex);
+            });
+
+            // Actualizar contador y botones
+            slideCounter.textContent = `${currentSlideIndex + 1} / ${totalSlides}`;
+            btnPrev.disabled = currentSlideIndex === 0;
+            btnNext.disabled = currentSlideIndex === totalSlides - 1;
+
+            // Actualizar barra de progreso
+            const progress = ((currentSlideIndex + 1) / totalSlides) * 100;
+            progressBar.style.width = `${progress}%`;
+
+            // Actualizar clase activa en índice
+            const indexItems = indexList.querySelectorAll('.index-item');
+            indexItems.forEach((item, idx) => {
+                item.classList.toggle('active', idx === currentSlideIndex);
+            });
+        }
+
+        function nextSlide() {
+            if (currentSlideIndex < totalSlides - 1) {
+                currentSlideIndex++;
+                updateSlide();
+            }
+        }
+
+        function prevSlide() {
+            if (currentSlideIndex > 0) {
+                currentSlideIndex--;
+                updateSlide();
+            }
+        }
+
+        function goToSlide(idx) {
+            if (idx >= 0 && idx < totalSlides) {
+                currentSlideIndex = idx;
+                updateSlide();
+            }
+        }
+
+        function toggleIndex() {
+            indexModal.classList.toggle('open');
+        }
+
+        function toggleFullscreen() {
+            if (!document.fullscreenElement) {
+                document.documentElement.requestFullscreen().catch(() => {});
+            } else {
+                if (document.exitFullscreen) {
+                    document.exitFullscreen();
+                }
+            }
+        }
+
+        // Navegación por teclado
+        window.addEventListener('keydown', (e) => {
+            // Ignorar si se escribe en un input
+            if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+
+            switch(e.key) {
+                case 'ArrowRight':
+                case 'PageDown':
+                case ' ':
+                    e.preventDefault();
+                    nextSlide();
+                    break;
+                case 'ArrowLeft':
+                case 'PageUp':
+                case 'Backspace':
+                    e.preventDefault();
+                    prevSlide();
+                    break;
+                case 'Home':
+                    e.preventDefault();
+                    goToSlide(0);
+                    break;
+                case 'End':
+                    e.preventDefault();
+                    goToSlide(totalSlides - 1);
+                    break;
+                case 'f':
+                case 'F':
+                    e.preventDefault();
+                    toggleFullscreen();
+                    break;
+                case 'm':
+                case 'M':
+                    e.preventDefault();
+                    toggleIndex();
+                    break;
+                case 'p':
+                case 'P':
+                    if (e.ctrlKey || e.metaKey) return; // Permite atajo nativo
+                    e.preventDefault();
+                    window.print();
+                    break;
+                case 'Escape':
+                    if (indexModal.classList.contains('open')) {
+                        toggleIndex();
+                    }
+                    break;
+            }
+        });
+
+        // Soporte táctil / Swipe para móviles y tablets
+        let touchStartX = 0;
+        let touchEndX = 0;
+
+        document.addEventListener('touchstart', (e) => {
+            touchStartX = e.changedTouches[0].screenX;
+        }, { passive: true });
+
+        document.addEventListener('touchend', (e) => {
+            touchEndX = e.changedTouches[0].screenX;
+            handleSwipe();
+        }, { passive: true });
+
+        function handleSwipe() {
+            const threshold = 50;
+            if (touchEndX < touchStartX - threshold) {
+                nextSlide();
+            } else if (touchEndX > touchStartX + threshold) {
+                prevSlide();
+            }
+        }
+
+        // Iniciar
+        initIndex();
+        updateSlide();
+    </script>
+</body>
+</html>

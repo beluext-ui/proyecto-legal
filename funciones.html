@@ -1,0 +1,916 @@
+<script>
+// ==========================================
+// SALVAGUARDA PARA PRUEBAS Y EJECUCIÓN LOCAL
+// ==========================================
+// Permite que la aplicación funcione y muestre datos de prueba locales
+// si se abre el archivo dashboard.html directamente en el navegador (fuera de Google Sheets)
+if (typeof google === 'undefined') {
+    var google = {
+        script: {
+            run: {
+                withSuccessHandler: function(successFn) {
+                    return {
+                        withFailureHandler: function(failFn) {
+                            return {
+                                obtenerDatosDashboard: function() {
+                                    console.log("Servidor local simulado: Cargando datos de prueba...");
+                                    setTimeout(function() {
+                                        successFn([
+                                            {
+                                                id: 'REQ-I-001',
+                                                correo_oficio: 'cibercrimen@investigaciones.cl',
+                                                fecha: '25/08/2026',
+                                                entidad: 'PDI',
+                                                sujeto: 'Rider',
+                                                estado: 'Nuevo',
+                                                url_file: 'https://drive.google.com/open?id=15xX4Yr4h-vrQ6wgdz-XoKcJlhqSq75MB',
+                                                id_file: '15xX4Yr4h-vrQ6wgdz-XoKcJlhqSq75MB',
+                                                es_valido: 'true',
+                                                datos_adicionales: true,
+                                                rider_nombre: 'Juan Esteban',
+                                                rider_apellido1: 'Pérez',
+                                                rider_apellido2: 'Gómez',
+                                                rider_patente: 'XYZ-99'
+                                            },
+                                            {
+                                                id: 'REQ-C-002',
+                                                correo_oficio: 'os9@carabineros.cl',
+                                                fecha: '26/08/2026',
+                                                entidad: 'Carabineros',
+                                                sujeto: 'Usuario',
+                                                estado: 'En Proceso',
+                                                url_file: 'https://drive.google.com/open?id=26xX4Yr4h-vrQ6wgdz-XoKcJlhqSq75MB',
+                                                id_file: '26xX4Yr4h-vrQ6wgdz-XoKcJlhqSq75MB',
+                                                es_valido: 'true',
+                                                datos_adicionales: true,
+                                                usuario_nombre: 'María Camila',
+                                                usuario_apellido1: 'López',
+                                                usuario_apellido2: 'Silva',
+                                                usuario_correo: 'maria.lopez@gmail.com',
+                                                usuario_telefono: '+56 9 1234 5678',
+                                                conexion_empresa: '<strong>Estado de Conexión:</strong> Activo<br><strong>Último Acceso:</strong> hace 2 horas desde Santiago, CL'
+                                            },
+                                            {
+                                                id: 'REQ-F-003',
+                                                correo_oficio: 'fiscalia@minpublico.cl',
+                                                fecha: '27/08/2026',
+                                                entidad: 'Fiscalía',
+                                                sujeto: 'Usuario',
+                                                estado: 'Rechazado',
+                                                url_file: '',
+                                                id_file: '',
+                                                es_valido: 'false',
+                                                datos_adicionales: false,
+                                                conexion_empresa: 'No se registra historial de conexión.'
+                                            }
+                                        ]);
+                                    }, 300);
+                                }
+                            };
+                        }
+                    };
+                }
+            }
+        }
+    };
+}
+
+// Base de Datos Real (Cargada asincrónicamente desde Google Sheets)
+let tickets = [];
+
+// Función para cargar dinámicamente los datos desde el backend
+function cargarDatos() {
+    console.log("Iniciando llamada asíncrona a obtenerDatosDashboard()...");
+    
+    // Mostrar indicador de carga animado en el cuerpo de la tabla
+    const tbody = document.getElementById('table-body');
+    if (tbody) {
+        tbody.innerHTML = `
+            <tr>
+                <td colspan="6" style="text-align: center; padding: 3.5rem 1.5rem; color: var(--text-sec);">
+                    <div style="border: 3px solid #E2E8F0; border-top: 3px solid var(--primary); border-radius: 50%; width: 24px; height: 24px; animation: spin 1s linear infinite; margin: 0 auto 0.75rem auto; box-sizing: border-box;"></div>
+                    <div style="font-weight: 500; font-size: 0.875rem;">Cargando...</div>
+                </td>
+            </tr>
+        `;
+    }
+    
+    google.script.run
+        .withSuccessHandler(function(datos) {
+            console.log("Éxito: Datos recibidos del backend:", datos);
+            
+            if (!datos || !Array.isArray(datos)) {
+                console.warn("Los datos recibidos no son un arreglo válido:", datos);
+                tickets = [];
+                renderTable();
+                return;
+            }
+            
+            tickets = datos.map(item => {
+                return {
+                    id: item.id || 'REQ-S/N',
+                    date: item.fecha || 'S/F',
+                    entity: item.entidad || 'Otros',
+                    subject: item.sujeto || 'Usuario',
+                    status: item.estado || 'Nuevo',
+                    correo_oficio: item.correo_oficio || '',
+                    url_file: item.url_file || '',
+                    id_file: item.id_file || '',
+                    es_valido: item.es_valido || '',
+                    datos_adicionales: item.datos_adicionales || false,
+                    conexion_empresa: item.conexion_empresa || '',
+                    url_response: item.url_response || '',
+                    informacion_adicional: item.informacion_adicional || '',
+                    // Datos de Rider
+                    rider_nombre: item.rider_nombre || '',
+                    rider_apellido1: item.rider_apellido1 || '',
+                    rider_apellido2: item.rider_apellido2 || '',
+                    rider_patente: item.rider_patente || '',
+                    // Datos de Usuario
+                    usuario_nombre: item.usuario_nombre || '',
+                    usuario_apellido1: item.usuario_apellido1 || '',
+                    usuario_apellido2: item.usuario_apellido2 || '',
+                    usuario_correo: item.usuario_correo || '',
+                    usuario_telefono: item.usuario_telefono || ''
+                };
+            });
+            
+            console.log("Mapeo completado. Tickets a renderizar:", tickets);
+            renderTable();
+
+            // Seeder para notificaciones iniciales si hay requerimientos Nuevos
+            const nuevosCount = tickets.filter(t => t.status === 'Nuevo').length;
+            if (nuevosCount > 0) {
+                notificacionesHistorial = [{
+                    id: Date.now(),
+                    asunto: "Requerimientos Pendientes",
+                    mensaje: `Tienes ${nuevosCount} requerimiento(s) nuevo(s) en la bandeja esperando revisión legal.`,
+                    time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+                    iconoHtml: `<svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>`,
+                    unread: true
+                }];
+                const notifDot = document.getElementById('notif-dot');
+                if (notifDot) notifDot.classList.add('active');
+                renderNotificacionesDropdown();
+            }
+        })
+        .withFailureHandler(function(err) {
+            console.error("Fallo crítico al invocar obtenerDatosDashboard:", err);
+            mostrarNotificacion(
+                "Error de Conexión", 
+                "No se pudieron obtener los datos de la base de datos. Revisa la consola (F12) o los permisos del script."
+            );
+        })
+        .obtenerDatosDashboard();
+}
+
+let currentTicketId = null;
+
+// LÓGICA DE SELECCIÓN DE DATOS (Múltiples Etiquetas)
+let datosAExtraer = new Set();
+
+function agregarDatoLista() {
+    const select = document.getElementById('tipo-extraccion');
+    const valor = select.value;
+    
+    if (valor && !datosAExtraer.has(valor)) {
+        datosAExtraer.add(valor);
+        renderizarTags();
+    }
+    select.value = ""; // Resetear select
+}
+
+function removerDato(valor) {
+    datosAExtraer.delete(valor);
+    renderizarTags();
+}
+
+function renderizarTags() {
+    const container = document.getElementById('datos-seleccionados');
+    container.innerHTML = ''; // Limpiar
+    
+    datosAExtraer.forEach(dato => {
+        const tag = document.createElement('div');
+        tag.className = 'tag';
+        tag.innerHTML = `
+            ${dato}
+            <button type="button" onclick="removerDato('${dato}')" title="Quitar">&times;</button>
+        `;
+        container.appendChild(tag);
+    });
+}
+
+// Variable global para filtro de sujeto lateral
+window.sidebarSujetoFilter = 'Todos';
+
+function buscarRequerimientos() {
+    renderTable();
+}
+
+function filtrarPorColumnas() {
+    renderTable();
+}
+
+function filtrarPorSujeto(sujeto, el) {
+    document.querySelectorAll('.nav-link').forEach(link => link.classList.remove('active'));
+    el.classList.add('active');
+    window.sidebarSujetoFilter = sujeto;
+    renderTable();
+}
+
+function limpiarTodosFiltros() {
+    // 1. Limpiar campos de texto y selectores dropdown
+    if (document.getElementById('input-busqueda')) document.getElementById('input-busqueda').value = "";
+    if (document.getElementById('filtro-col-fecha')) document.getElementById('filtro-col-fecha').value = "";
+    if (document.getElementById('filtro-col-entidad')) document.getElementById('filtro-col-entidad').value = "";
+    if (document.getElementById('filtro-col-estado')) document.getElementById('filtro-col-estado').value = "";
+    
+    // 2. Restablecer filtro de sujeto lateral (Sidebar)
+    window.sidebarSujetoFilter = 'Todos';
+    document.querySelectorAll('.nav-link').forEach(link => link.classList.remove('active'));
+    const firstLink = document.querySelector('.nav-link');
+    if (firstLink) firstLink.classList.add('active');
+    
+    // 3. Renderizar de nuevo la tabla limpia
+    renderTable();
+}
+
+// Renderizar Tabla con filtros acumulativos (Estado, Sujeto Sidebar, Búsqueda, Columnas)
+function renderTable() {
+    const tbody = document.getElementById('table-body');
+    if (!tbody) {
+        console.warn("Elemento 'table-body' no encontrado en el DOM.");
+        return;
+    }
+    tbody.innerHTML = '';
+    
+    const searchVal = (document.getElementById('input-busqueda') ? document.getElementById('input-busqueda').value : '').toLowerCase().trim();
+    const colFecha = (document.getElementById('filtro-col-fecha') ? document.getElementById('filtro-col-fecha').value : '').toLowerCase().trim();
+    const colEntidad = document.getElementById('filtro-col-entidad') ? document.getElementById('filtro-col-entidad').value : '';
+    const colEstado = document.getElementById('filtro-col-estado') ? document.getElementById('filtro-col-estado').value : '';
+
+    let dataToRender = tickets;
+
+    // 1. Filtrar por tipo de sujeto (Rider / Usuario) desde Sidebar
+    if (window.sidebarSujetoFilter !== 'Todos') {
+        dataToRender = dataToRender.filter(t => t.subject === window.sidebarSujetoFilter);
+    }
+
+    // 2. Filtrar por búsqueda general en tiempo real (ID, nombres, correo oficio)
+    if (searchVal !== '') {
+        dataToRender = dataToRender.filter(t => {
+            const idMatch = t.id.toLowerCase().includes(searchVal);
+            const correoOficioMatch = (t.correo_oficio || '').toLowerCase().includes(searchVal);
+            
+            let nombreMatch = false;
+            if (t.subject === 'Rider') {
+                const nombreCompleto = `${t.rider_nombre || ''} ${t.rider_apellido1 || ''} ${t.rider_apellido2 || ''}`.toLowerCase();
+                nombreMatch = nombreCompleto.includes(searchVal);
+            } else {
+                const nombreCompleto = `${t.usuario_nombre || ''} ${t.usuario_apellido1 || ''} ${t.usuario_apellido2 || ''}`.toLowerCase();
+                nombreMatch = nombreCompleto.includes(searchVal);
+            }
+            
+            return idMatch || correoOficioMatch || nombreMatch;
+        });
+    }
+
+    // 3. Filtrar por columnas individuales
+    if (colFecha !== '') {
+        dataToRender = dataToRender.filter(t => t.date && t.date.toLowerCase().includes(colFecha));
+    }
+    if (colEntidad !== '') {
+        dataToRender = dataToRender.filter(t => t.entity === colEntidad);
+    }
+    if (colEstado !== '') {
+        dataToRender = dataToRender.filter(t => t.status === colEstado);
+    }
+
+    if (dataToRender.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="6" style="text-align: center; color: var(--text-sec); padding: 2rem;">No se encontraron requerimientos</td></tr>`;
+        return;
+    }
+
+    dataToRender.forEach(ticket => {
+        let statusClass = "status-Nuevo";
+        if(ticket.status === 'En Proceso') statusClass = "status-EnProceso";
+        if(ticket.status === 'Respuesta Lista') statusClass = "status-Lista";
+        if(ticket.status === 'Resuelto') statusClass = "status-Resuelto";
+        if(ticket.status === 'Rechazado') statusClass = "status-Rechazado";
+
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+            <td style="font-weight: 500;">${ticket.id}</td>
+            <td>${ticket.date}</td>
+            <td>${ticket.entity}</td>
+            <td>${ticket.subject}</td>
+            <td><span class="badge ${statusClass}">${ticket.status}</span></td>
+            <td><button style="background:none; border:none; color:var(--primary); font-weight:600; cursor:pointer;" onclick='abrirDetalleTicket("${ticket.id}")'>Ver Detalles</button></td>
+        `;
+        tbody.appendChild(tr);
+    });
+}
+
+// Modales
+function openModal(id) { document.getElementById(id).classList.add('active'); }
+function closeModal(id) { document.getElementById(id).classList.remove('active'); }
+
+// Auxiliar para formatear celdas vacías o no especificadas con estilo italic
+function formatVal(val) {
+    if (!val || val === "No especificado" || val === "") {
+        return '<span class="vd-value vd-value-empty">No especificado</span>';
+    }
+    return `<span class="vd-value">${val}</span>`;
+}
+
+// Abrir Detalle Principal
+function abrirDetalleTicket(id) {
+    currentTicketId = id;
+    const ticket = tickets.find(t => t.id === id);
+    if (!ticket) return;
+    
+    // Selectores defensivos (null-safe) para máxima estabilidad y compatibilidad de versiones
+    const mTicketId = document.getElementById('m-ticket-id'); if (mTicketId) mTicketId.innerText = ticket.id;
+    const mEntity = document.getElementById('m-entity'); if (mEntity) mEntity.innerText = ticket.entity;
+    const mCorreoOficio = document.getElementById('m-correo-oficio'); if (mCorreoOficio) mCorreoOficio.innerText = ticket.correo_oficio || 'No especificado';
+    const mFecha = document.getElementById('m-fecha'); if (mFecha) mFecha.innerText = ticket.date || 'No especificado';
+    const mBadgeSubject = document.getElementById('m-badge-subject'); if (mBadgeSubject) mBadgeSubject.innerText = ticket.subject;
+
+    // --- SECCIÓN DE DATOS ADICIONALES DINÁMICOS ---
+    const datosAdicContent = document.getElementById('m-datos-adicionales-content') || document.getElementById('m-search-data');
+    const datosAdicTitle = document.getElementById('m-datos-adicionales-title');
+    
+    if (datosAdicTitle) {
+        datosAdicTitle.innerText = ticket.subject === 'Rider' ? 'Datos Adicionales (Perfil del Rider)' : 'Datos Adicionales (Perfil del Usuario)';
+    }
+    
+    if (datosAdicContent) {
+        if (!ticket.datos_adicionales) {
+            datosAdicContent.innerHTML = `
+                <div class="vd-field"><span class="vd-value vd-value-empty">No se dispone de datos adicionales</span></div>
+            `;
+        } else {
+            if (ticket.subject === 'Rider') {
+                datosAdicContent.innerHTML = `
+                    <div class="vd-field"><span class="vd-label">Nombre</span>${formatVal(ticket.rider_nombre)}</div>
+                    <div class="vd-field"><span class="vd-label">Primer Apellido</span>${formatVal(ticket.rider_apellido1)}</div>
+                    <div class="vd-field"><span class="vd-label">Segundo Apellido</span>${formatVal(ticket.rider_apellido2)}</div>
+                    <div class="vd-field"><span class="vd-label">Patente de Vehículo</span>${formatVal(ticket.rider_patente)}</div>
+                `;
+            } else {
+                datosAdicContent.innerHTML = `
+                    <div class="vd-field"><span class="vd-label">Nombre</span>${formatVal(ticket.usuario_nombre)}</div>
+                    <div class="vd-field"><span class="vd-label">Primer Apellido</span>${formatVal(ticket.usuario_apellido1)}</div>
+                    <div class="vd-field"><span class="vd-label">Segundo Apellido</span>${formatVal(ticket.usuario_apellido2)}</div>
+                    <div class="vd-field"><span class="vd-label">Correo de Usuario</span>${formatVal(ticket.usuario_correo)}</div>
+                    <div class="vd-field"><span class="vd-label">Celular de Usuario</span>${formatVal(ticket.usuario_telefono)}</div>
+                `;
+            }
+        }
+    }
+
+    // --- BOTÓN "VER DOC. ADJUNTO" (siempre visible, tal como en bueno.png) ---
+    const pdfBox = document.getElementById('m-pdf-box');
+    const conexionContainer = document.getElementById('m-conexion-empresa-container');
+    const conexionContent = document.getElementById('m-conexion-empresa-content');
+
+    // El botón de ver/descargar documento se muestra siempre, sin importar el sujeto
+    if (pdfBox) pdfBox.style.display = 'block';
+
+    const btnDownload = document.getElementById('btn-download-pdf');
+    if (btnDownload) {
+        btnDownload.onclick = function() {
+            let url = ticket.url_file;
+            if (!url && ticket.id_file) {
+                url = "https://drive.google.com/open?id=" + ticket.id_file;
+            }
+            if (url) {
+                window.open(url, '_blank');
+            } else {
+                alert("No hay archivo disponible para descargar.");
+            }
+        };
+    }
+
+    const infoAdicContainer = document.getElementById('m-informacion-adicional-container');
+    const infoAdicContent = document.getElementById('m-informacion-adicional-content');
+
+    // --- CONDICIONAL: CONEXIÓN CON LA EMPRESA (solo para Usuario) ---
+    if (ticket.subject === 'Rider') {
+        if (conexionContainer) conexionContainer.style.display = 'none';
+        if (infoAdicContainer) infoAdicContainer.style.display = 'none';
+    } else {
+        if (conexionContainer) conexionContainer.style.display = 'block';
+        if (infoAdicContainer) infoAdicContainer.style.display = 'block';
+        
+        // Inyectar datos de conexión reales para el usuario obtenidos de la columna Conexion_empresa
+        if (conexionContent) {
+            conexionContent.innerHTML = ticket.conexion_empresa ? 
+                ticket.conexion_empresa.toString().replace(/\n/g, '<br>') : 
+                'No se registra información de conexión para este usuario en la base de datos.';
+        }
+        
+        // Inyectar información adicional obtenida de la última columna
+        if (infoAdicContent) {
+            infoAdicContent.innerHTML = ticket.informacion_adicional ? 
+                ticket.informacion_adicional.toString().replace(/\n/g, '<br>') : 
+                'No se registra información adicional o complementaria para este usuario.';
+        }
+    }
+
+    // Configurar Visual de Estados y Botones (Header Badges)
+    const statusEl = document.getElementById('m-badge-status');
+    if (statusEl) {
+        statusEl.innerText = ticket.status;
+        statusEl.className = 'vd-badge-status';
+        statusEl.style.display = 'inline-block';
+        
+        if(ticket.status === 'Nuevo') {
+            statusEl.classList.add('status-Nuevo');
+        } 
+        else if (ticket.status === 'En Proceso') {
+            statusEl.classList.add('status-EnProceso');
+        }
+        else if (ticket.status === 'Respuesta Lista') {
+            statusEl.classList.add('status-Lista');
+        }
+        else { // Resuelto o Rechazado
+            statusEl.classList.add(`status-${(ticket.status || 'Nuevo').toString().replace(/\s+/g, '')}`);
+        }
+    }
+    
+    const btnRechazar = document.getElementById('btn-rechazar');
+    const btnAceptar = document.getElementById('btn-aceptar');
+    const btnEnviarFinal = document.getElementById('btn-enviar-final');
+    const btnFinalizarRespuesta = document.getElementById('btn-finalizar-respuesta');
+    const internalBox = document.getElementById('internal-response-container');
+    const uploadBox = document.getElementById('upload-response-container');
+
+    // Resetear vistas de botones principales
+    if (btnRechazar) btnRechazar.style.display = 'inline-flex';
+    if (btnAceptar) {
+        btnAceptar.style.display = 'inline-flex';
+        btnAceptar.disabled = false;
+        btnAceptar.innerText = "Aceptar Req.";
+    }
+    if (btnEnviarFinal) btnEnviarFinal.style.display = 'none';
+    if (btnFinalizarRespuesta) {
+        btnFinalizarRespuesta.style.display = 'none';
+        btnFinalizarRespuesta.disabled = true;
+    }
+    if (internalBox) internalBox.classList.remove('active');
+    if (uploadBox) uploadBox.classList.remove('active');
+
+    // Limpiar campos y formularios de rechazo y carga
+    const comentarioRechazo = document.getElementById('comentario-rechazo');
+    if (comentarioRechazo) comentarioRechazo.value = "";
+    
+    const motivoRechazo = document.getElementById('motivo-rechazo');
+    if (motivoRechazo) motivoRechazo.value = "falta_orden";
+    
+    const groupEspecifique = document.getElementById('group-especifique-rechazo');
+    if (groupEspecifique) groupEspecifique.style.display = 'none';
+    
+    const especifiqueRechazo = document.getElementById('especifique-rechazo');
+    if (especifiqueRechazo) especifiqueRechazo.value = '';
+
+    const inputPdf = document.getElementById('input-pdf-respuesta');
+    if (inputPdf) inputPdf.value = '';
+    
+    const txtNombreArchivo = document.getElementById('nombre-archivo-respuesta');
+    if (txtNombreArchivo) {
+        txtNombreArchivo.innerText = '';
+        txtNombreArchivo.style.display = 'none';
+    }
+    
+    const txtComentarioRespuesta = document.getElementById('comentario-respuesta');
+    if (txtComentarioRespuesta) txtComentarioRespuesta.value = '';
+
+    // Configuración condicional por estado
+    if (ticket.status === 'Nuevo') {
+        // Estado base, reseteado arriba
+    } 
+    else if (ticket.status === 'En Proceso') {
+        if (btnAceptar) btnAceptar.style.display = 'none';
+        if (btnRechazar) btnRechazar.style.display = 'none';
+        if (btnFinalizarRespuesta) btnFinalizarRespuesta.style.display = 'inline-flex';
+        if (uploadBox) uploadBox.classList.add('active');
+    }
+    else if (ticket.status === 'Respuesta Lista') {
+        if (btnAceptar) btnAceptar.style.display = 'none';
+        if (btnRechazar) btnRechazar.style.display = 'none';
+        if (btnEnviarFinal) btnEnviarFinal.style.display = 'inline-flex';
+        if (internalBox) {
+            internalBox.classList.add('active');
+            var responseUrl = ticket.url_response || "#";
+            var responseFilename = responseUrl !== "#" ? "Respuesta_Requerimiento_" + ticket.id + ".pdf" : "Extraccion_Resultados.pdf";
+            internalBox.innerHTML = `
+                <h4 style="color: #0369A1; font-size: 0.875rem; margin-bottom: 0.5rem; font-weight: 600;">📥 Respuesta del Equipo Interno</h4>
+                <p style="font-size: 0.75rem; color: var(--text-sec); margin-bottom: 0.5rem;">El equipo de datos adjuntó la información solicitada:</p>
+                <a href="${responseUrl}" target="_blank" style="text-decoration: none; cursor: pointer; display: inline-flex;">
+                    <div style="background: white; border: 1px solid #BAE6FD; padding: 0.5rem 0.75rem; border-radius: 6px; display: inline-flex; align-items: center; gap: 0.5rem; font-size: 0.75rem; font-weight: bold; color: #0369A1; box-shadow: var(--shadow-sm); transition: all 0.2s;">
+                        <svg width="16" height="16" style="color:#0284C7" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4z" clip-rule="evenodd"></path></svg>
+                        ${responseFilename}
+                    </div>
+                </a>
+            `;
+        }
+    }
+    else if (ticket.status === 'Resuelto') {
+        if (btnAceptar) btnAceptar.style.display = 'none';
+        if (btnRechazar) btnRechazar.style.display = 'none';
+        if (internalBox) {
+            internalBox.classList.add('active');
+            var responseUrl = ticket.url_response || "#";
+            var responseFilename = responseUrl !== "#" ? "Respuesta_Requerimiento_" + ticket.id + ".pdf" : "Extraccion_Resultados.pdf";
+            internalBox.innerHTML = `
+                <h4 style="color: #0369A1; font-size: 0.875rem; margin-bottom: 0.5rem; font-weight: 600;">📥 Respuesta del Equipo Interno</h4>
+                <p style="font-size: 0.75rem; color: var(--text-sec); margin-bottom: 0.5rem;">El equipo de datos adjuntó la información solicitada:</p>
+                <a href="${responseUrl}" target="_blank" style="text-decoration: none; cursor: pointer; display: inline-flex;">
+                    <div style="background: white; border: 1px solid #BAE6FD; padding: 0.5rem 0.75rem; border-radius: 6px; display: inline-flex; align-items: center; gap: 0.5rem; font-size: 0.75rem; font-weight: bold; color: #0369A1; box-shadow: var(--shadow-sm); transition: all 0.2s;">
+                        <svg width="16" height="16" style="color:#0284C7" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4z" clip-rule="evenodd"></path></svg>
+                        ${responseFilename}
+                    </div>
+                </a>
+            `;
+        }
+    }
+    else if (ticket.status === 'Rechazado') {
+        if (btnAceptar) btnAceptar.style.display = 'none';
+        if (btnRechazar) btnRechazar.style.display = 'none';
+        if (internalBox) {
+            internalBox.classList.add('active');
+            const motivoRechazoText = ticket.url_response || "No especificado";
+            internalBox.innerHTML = `
+                <h4 style="color: #DC2626; font-size: 0.875rem; margin-bottom: 0.5rem; font-weight: 600;">❌ Detalle del Rechazo</h4>
+                <p style="font-size: 0.75rem; color: var(--text-sec); margin-bottom: 0.5rem;">Este requerimiento fue rechazado por el siguiente motivo:</p>
+                <div style="background: #FEF2F2; border: 1px solid #FCA5A5; padding: 0.75rem 1rem; border-radius: 8px; font-size: 0.825rem; font-weight: 600; color: #991B1B; box-shadow: var(--shadow-sm); text-align: left;">
+                    ${motivoRechazoText}
+                </div>
+            `;
+        }
+    }
+
+    // Limpiar etiquetas de selección múltiple
+    datosAExtraer.clear();
+    document.getElementById('tipo-extraccion').value = "";
+    renderizarTags();
+
+    openModal('ticket-modal');
+}
+
+// Historial de notificaciones en memoria
+let notificacionesHistorial = [];
+
+// Función para mostrar notificaciones flotantes y cargarlas en la campanita
+function mostrarNotificacion(asunto, mensaje, iconoHtml = '') {
+    const simulador = document.getElementById('alert-view');
+    document.getElementById('alert-subject').innerHTML = `<strong>Contexto:</strong> ${asunto}`;
+    document.getElementById('alert-content').innerHTML = mensaje.replace(/\n/g, '<br>');
+    
+    if (iconoHtml) {
+        document.getElementById('alert-type').innerHTML = iconoHtml;
+    }
+
+    simulador.classList.remove('active');
+    void simulador.offsetWidth; // Reflow
+    simulador.classList.add('active');
+
+    setTimeout(() => { simulador.classList.remove('active'); }, 8000);
+
+    // Extraer únicamente el elemento <svg> para la burbuja de la campana
+    // Esto evita que textos adjuntos (como "Requerimiento Aceptado") desborden y rompan el diseño del círculo
+    let cleanIcon = "";
+    if (iconoHtml) {
+        const svgMatch = iconoHtml.match(/<svg[^>]*>([\s\S]*?)<\/svg>/i);
+        cleanIcon = svgMatch ? svgMatch[0] : "";
+    }
+
+    // Agregar al historial de la campanita
+    notificacionesHistorial.unshift({
+        id: Date.now() + Math.random(),
+        asunto: asunto,
+        mensaje: mensaje,
+        time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+        iconoHtml: cleanIcon,
+        unread: true
+    });
+
+    const notifDot = document.getElementById('notif-dot');
+    if (notifDot) notifDot.classList.add('active');
+
+    renderNotificacionesDropdown();
+}
+
+// Alternar visibilidad del panel de notificaciones
+function toggleNotifications(event) {
+    if (event) event.stopPropagation(); // Evitar que el clic en la campana cierre el panel
+    
+    const dropdown = document.getElementById('notifications-dropdown');
+    if (!dropdown) return;
+
+    if (dropdown.style.display === 'none' || dropdown.style.display === '') {
+        dropdown.style.display = 'flex';
+        
+        // Marcar todas como leídas al abrir
+        notificacionesHistorial.forEach(n => n.unread = false);
+        const notifDot = document.getElementById('notif-dot');
+        if (notifDot) notifDot.classList.remove('active');
+        
+        renderNotificacionesDropdown();
+    } else {
+        dropdown.style.display = 'none';
+    }
+}
+
+// Limpiar todas las notificaciones
+function limpiarNotificaciones(event) {
+    if (event) event.stopPropagation();
+    notificacionesHistorial = [];
+    renderNotificacionesDropdown();
+}
+
+// Renderizar el panel de notificaciones
+function renderNotificacionesDropdown() {
+    const container = document.getElementById('notif-list-container');
+    if (!container) return;
+
+    if (notificacionesHistorial.length === 0) {
+        container.innerHTML = `<div class="notif-empty">No tienes notificaciones pendientes</div>`;
+        return;
+    }
+
+    let html = '';
+    notificacionesHistorial.forEach(notif => {
+        const unreadClass = notif.unread ? 'unread' : '';
+        const defaultIcon = `<svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"></path></svg>`;
+        const icon = notif.iconoHtml ? notif.iconoHtml : defaultIcon;
+
+        html += `
+            <div class="notif-item ${unreadClass}">
+                <div class="notif-item-icon">
+                    ${icon}
+                </div>
+                <div class="notif-item-content">
+                    <span class="notif-item-title">${notif.asunto}</span>
+                    <span class="notif-item-desc">${notif.mensaje.replace(/\n/g, ' ')}</span>
+                    <span class="notif-item-time">${notif.time}</span>
+                </div>
+            </div>
+        `;
+    });
+    container.innerHTML = html;
+}
+
+// Cerrar panel de notificaciones al hacer clic afuera
+document.addEventListener('click', function(event) {
+    const dropdown = document.getElementById('notifications-dropdown');
+    if (dropdown && dropdown.style.display === 'flex') {
+        const isClickInside = dropdown.contains(event.target) || event.target.closest('.notification-bell');
+        if (!isClickInside) {
+            dropdown.style.display = 'none';
+        }
+    }
+});
+
+// --- ACCIONES DE BOTONES ---
+
+function confirmarAceptacion() {
+    const ticket = tickets.find(t => t.id === currentTicketId);
+    if (!ticket) return;
+
+    const btnAceptar = document.getElementById('btn-aceptar');
+    if (btnAceptar) {
+        btnAceptar.disabled = true;
+        btnAceptar.innerText = "Aceptando...";
+    }
+
+    google.script.run
+        .withSuccessHandler(function(res) {
+            if (btnAceptar) {
+                btnAceptar.disabled = false;
+                btnAceptar.innerText = "Aceptar Req.";
+            }
+            
+            if (res && res.success) {
+                ticket.status = 'En Proceso';
+                closeModal('ticket-modal');
+                renderTable();
+                
+                const icono = `<svg width="20" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg> Requerimiento Aceptado`;
+                mostrarNotificacion(`Requerimiento ${ticket.id} en Búsqueda`, `Se ha aceptado el requerimiento. El caso ahora permanecerá "En Proceso" hasta obtener resultados.`, icono);
+            } else {
+                alert("Error al aceptar requerimiento: " + (res ? res.error : "Error desconocido"));
+            }
+        })
+        .withFailureHandler(function(err) {
+            if (btnAceptar) {
+                btnAceptar.disabled = false;
+                btnAceptar.innerText = "Aceptar Req.";
+            }
+            alert("Error de comunicación con el backend: " + err.toString());
+        })
+        .procesarAceptacionBackend(ticket.id);
+}
+
+function confirmarRechazo() {
+    const ticket = tickets.find(t => t.id === currentTicketId);
+    if (!ticket) return;
+    
+    const motivo = document.getElementById('motivo-rechazo').value;
+    const especifique = document.getElementById('especifique-rechazo').value.trim();
+    
+    if (motivo === 'otro' && especifique === '') {
+        alert("Por favor, especifique el motivo del rechazo.");
+        return;
+    }
+
+    const btnConfirmar = document.querySelector('#modal-rechazo .btn-reject');
+    if (btnConfirmar) {
+        btnConfirmar.disabled = true;
+        btnConfirmar.innerText = "Procesando...";
+    }
+
+    google.script.run
+        .withSuccessHandler(function(res) {
+            if (btnConfirmar) {
+                btnConfirmar.disabled = false;
+                btnConfirmar.innerText = "Confirmar Rechazo";
+            }
+            
+            if (res && res.success) {
+                closeModal('modal-rechazo');
+                
+                let cuerpoMensaje = "";
+                let motivoFinalStr = "";
+                if (motivo === 'falta_orden') {
+                    cuerpoMensaje = "Lamentablemente, no es posible entregar la información solicitada debido a que la resolución judicial adjunta es inválida.";
+                    motivoFinalStr = "Resolución Judicial Adjunta inválida";
+                } else if (motivo === 'sin_datos') {
+                    cuerpoMensaje = "Tras una búsqueda exhaustiva en nuestros sistemas, no hemos encontrado registros asociados a la persona.";
+                    motivoFinalStr = "Datos insuficientes para la búsqueda (la persona no registra conexión)";
+                } else if (motivo === 'conexion_inconsistente') {
+                    // --- NUEVA OPCIÓN AÑADIDA AQUÍ ---
+                    cuerpoMensaje = "Lamentablemente, no es posible procesar su solicitud debido a que la fundamentación de conexión aportada es poco concisa o insuficiente.";
+                    motivoFinalStr = "Fundamentación de conexión poco concisa";
+                } else if (motivo === 'otro') {
+                    cuerpoMensaje = "Motivo: " + especifique;
+                    motivoFinalStr = especifique;
+                }
+
+                const msjCompleto = `Se ha enviado el correo a ${ticket.correo_oficio || 'la autoridad'}:\n\nEstimado/a,\nHemos revisado su requerimiento N° ${ticket.id}.\n${cuerpoMensaje}\n\nPor este motivo, se le solicita llenar el formulario de nuevo subsanando el error.\n\nSaludos cordiales,\nEquipo Legal - PedidosYa.`;
+
+                const icono = `<svg width="20" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg> Requerimiento Rechazado`;
+                mostrarNotificacion(`Cierre y Notificación a Autoridad`, msjCompleto, icono);
+                
+                ticket.status = 'Rechazado';
+                ticket.url_response = motivoFinalStr; // Registrar el motivo del rechazo
+                closeModal('ticket-modal');
+                renderTable();
+            } else {
+                alert("Error al rechazar requerimiento: " + (res ? res.error : "Error desconocido"));
+            }
+        })
+        .withFailureHandler(function(err) {
+            if (btnConfirmar) {
+                btnConfirmar.disabled = false;
+                btnConfirmar.innerText = "Confirmar Rechazo";
+            }
+            alert("Error de comunicación con el backend: " + err.toString());
+        })
+        .procesarRechazoBackend(ticket.id, motivo, motivo === 'otro' ? especifique : "");
+}
+
+function enviarRespuestaAutoridad() {
+    const ticket = tickets.find(t => t.id === currentTicketId);
+    if (!ticket) return;
+    
+    const msjCompleto = `Se ha enviado el siguiente correo a la entidad ${ticket.entity}:\n\nEstimado/a,\nEn respuesta a su oficio judicial N° ${ticket.id}, le hacemos entrega formal de los antecedentes solicitados consolidados en el documento PDF adjunto.\nCon este envío, damos por resuelto y cerrado el requerimiento.\n\n📎 Anexo_Respuesta_${ticket.id}.pdf`;
+
+    const icono = `<svg width="20" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg> Respuesta Enviada`;
+    mostrarNotificacion(`Cierre Exitoso de Requerimiento`, msjCompleto, icono);
+    
+    ticket.status = 'Resuelto';
+    document.getElementById('notif-dot').classList.remove('active');
+    
+    closeModal('ticket-modal');
+    renderTable();
+}
+
+function actualizarNombreArchivoRespuesta() {
+    const fileInput = document.getElementById('input-pdf-respuesta');
+    const lblNombre = document.getElementById('nombre-archivo-respuesta');
+    const btnFinalizar = document.getElementById('btn-finalizar-respuesta');
+    
+    if (fileInput.files.length > 0) {
+        const file = fileInput.files[0];
+        if (file.type !== 'application/pdf') {
+            alert('Por favor, seleccione un archivo PDF válido.');
+            fileInput.value = '';
+            lblNombre.innerText = '';
+            lblNombre.style.display = 'none';
+            if (btnFinalizar) btnFinalizar.disabled = true;
+            return;
+        }
+        lblNombre.innerText = "📎 " + file.name;
+        lblNombre.style.display = 'inline-block';
+        if (btnFinalizar) btnFinalizar.disabled = false;
+    } else {
+        lblNombre.innerText = '';
+        lblNombre.style.display = 'none';
+        if (btnFinalizar) btnFinalizar.disabled = true;
+    }
+}
+
+function enviarRespuestaPDF() {
+    const ticket = tickets.find(t => t.id === currentTicketId);
+    if (!ticket) return;
+    
+    const fileInput = document.getElementById('input-pdf-respuesta');
+    if (fileInput.files.length === 0) {
+        alert("Por favor, cargue un documento PDF de respuesta.");
+        return;
+    }
+    
+    const file = fileInput.files[0];
+    
+    const btnFinalizar = document.getElementById('btn-finalizar-respuesta');
+    if (btnFinalizar) {
+        btnFinalizar.disabled = true;
+        btnFinalizar.innerText = "Enviando...";
+    }
+    
+    // Leer el archivo como base64
+    const reader = new FileReader();
+    reader.onload = function(e) {
+        const fileBase64 = e.target.result.split(',')[1];
+        
+        google.script.run
+            .withSuccessHandler(function(res) {
+                if (btnFinalizar) {
+                    btnFinalizar.disabled = false;
+                    btnFinalizar.innerText = "Finalizar y enviar respuesta";
+                }
+                
+                if (res && res.success) {
+                    ticket.status = 'Resuelto';
+                    closeModal('ticket-modal');
+                    renderTable();
+                    
+                    const msjCompleto = `Se ha enviado el correo a la dirección ${ticket.correo_oficio || 'del oficio'}:\n\nEstimado/a,\nEn respuesta a su oficio judicial N° ${ticket.id}, le hacemos entrega formal de los antecedentes solicitados consolidados en el documento PDF adjunto.\nCon este envío, damos por resuelto y cerrado el requerimiento.\n\n📎 Adjunto: ${file.name}`;
+                    const icono = `<svg width="20" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg> Respuesta Enviada`;
+                    mostrarNotificacion(`Cierre Exitoso de Requerimiento`, msjCompleto, icono);
+                } else {
+                    alert("Error al enviar la respuesta: " + (res ? res.error : "Error desconocido"));
+                }
+            })
+            .withFailureHandler(function(err) {
+                if (btnFinalizar) {
+                    btnFinalizar.disabled = false;
+                    btnFinalizar.innerText = "Finalizar y enviar respuesta";
+                }
+                alert("Error de comunicación con el backend: " + err.toString());
+            })
+            .procesarResolucionBackend(ticket.id, fileBase64, file.name);
+    };
+    reader.onerror = function() {
+        alert("Error al leer el archivo PDF.");
+        if (btnFinalizar) {
+            btnFinalizar.disabled = false;
+            btnFinalizar.innerText = "Finalizar y enviar respuesta";
+        }
+    };
+    reader.readAsDataURL(file);
+}
+
+// Inicializar de manera segura una vez que el DOM esté completamente cargado
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', function() {
+        cargarDatos();
+        
+        // Registrar evento dinámico para selector de motivo de rechazo
+        const selectRechazo = document.getElementById('motivo-rechazo');
+        if (selectRechazo) {
+            selectRechazo.addEventListener('change', function() {
+                const groupEspecifique = document.getElementById('group-especifique-rechazo');
+                if (groupEspecifique) {
+                    groupEspecifique.style.display = this.value === 'otro' ? 'block' : 'none';
+                }
+            });
+        }
+    });
+} else {
+    cargarDatos();
+    
+    // Registrar evento dinámico para selector de motivo de rechazo
+    const selectRechazo = document.getElementById('motivo-rechazo');
+    if (selectRechazo) {
+        selectRechazo.addEventListener('change', function() {
+            const groupEspecifique = document.getElementById('group-especifique-rechazo');
+            if (groupEspecifique) {
+                groupEspecifique.style.display = this.value === 'otro' ? 'block' : 'none';
+            }
+        });
+    }
+}
+</script>

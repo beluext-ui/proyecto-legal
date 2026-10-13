@@ -1,0 +1,8 @@
+{
+  "dependencies": {
+    "@google/genai": "^2.23.0"
+  },
+  "devDependencies": {
+    "@google/gemini-cli": "^0.60.0"
+  }
+}
