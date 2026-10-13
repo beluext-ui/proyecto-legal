@@ -2,4 +2,3 @@ node_modules/
 .gemini/
 .env
 *.log
-upload_to_github.js
